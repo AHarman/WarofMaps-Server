@@ -5,6 +5,7 @@ threadsafe: true
 handlers:
 - url: /api.*
   script: api.app
+  secure: always
 
 libraries:
 - name: webapp2
