@@ -35,25 +35,12 @@ def oauth_required(http_handler_function):
 
 	return inner
 
-class Testing(webapp2.RequestHandler):
-	def get(self):
-		given_string = self.request.get("test_string")
-		self.response.write("Good golly gosh, you said \"" + given_string + "\"")
-
-class Root(webapp2.RequestHandler):
-	def get(self):
-		self.response.write("This is a hardcoded string in python!")
-
 class Login(webapp2.RequestHandler):
 	@oauth_required
 	def post(self):
 		self.response.write("You've been authenticated!")
 		return
-		
-		
 
 app = webapp2.WSGIApplication([
-	("/api/?", Root),
-	("/api/testing/?", Testing),
 	("/api/login/?", Login),
 ], debug=True)
