@@ -4,28 +4,30 @@ import logging
 import credentials
 import time
 
+def oauth_failed(requestHandler):
+	requestHandler.response.write("Invalid token")
+	requestHandler.response.status = 401
+	return
+
 def oauth_required(http_handler_function):
 	def inner(requestHandler):
 		headers = requestHandler.request.headers
 		if "Authorization" in headers and headers["Authorization"].split()[0] == "Bearer:":
 			id_token = headers["Authorization"].split()[1]
 		else:
-			requestHandler.response.write("Invalid token")
-			requestHandler.response.status = 401
+			oauth_failed(requestHandler)
 			return
 		try:
 			idinfo = client.verify_id_token(id_token, credentials.client_id)
 			if idinfo["iss"] not in ["accounts.google.com", "https://accounts.google.com"]:
 				raise crypt.AppIdentityError("Wrong issuer.")
 		except crypt.AppIdentityError:
-			requestHandler.response.write("Invalid token")
-			requestHandler.response.status = 401
+			oauth_failed(requestHandler)
 			return
 
 		current_time = int(time.time())
 		if not (int(idinfo["iat"]) < current_time and current_time < int(idinfo["exp"])):
-			requestHandler.response.write("Invalid token")
-			requestHandler.response.status = 401
+			oauth_failed(requestHandler)
 			return
 
 		userid = idinfo["sub"]
