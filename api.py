@@ -5,25 +5,31 @@ import credentials
 import time
 
 def oauth_required(http_handler_function):
-	def inner(self):
-		id_token = self.request.body
+	def inner(requestHandler):
+		headers = requestHandler.request.headers
+		if "Authorization" in headers and headers["Authorization"].split()[0] == "Bearer:":
+			id_token = headers["Authorization"].split()[1]
+		else:
+			requestHandler.response.write("Invalid token")
+			requestHandler.response.status = 401
+			return
 		try:
 			idinfo = client.verify_id_token(id_token, credentials.client_id)
 			if idinfo["iss"] not in ["accounts.google.com", "https://accounts.google.com"]:
 				raise crypt.AppIdentityError("Wrong issuer.")
 		except crypt.AppIdentityError:
-			self.response.write("Exception! Invalid token!")
-			self.response.status = "401"
+			requestHandler.response.write("Invalid token")
+			requestHandler.response.status = 401
 			return
 
 		current_time = int(time.time())
 		if not (int(idinfo["iat"]) < current_time and current_time < int(idinfo["exp"])):
-			self.response.write("Expired token! Need me a new one!")
-			self.response.status = "401"
+			requestHandler.response.write("Invalid token")
+			requestHandler.response.status = 401
 			return
 
 		userid = idinfo["sub"]
-		return http_handler_function(self)
+		return http_handler_function(requestHandler)
 
 	return inner
 
