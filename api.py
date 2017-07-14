@@ -7,6 +7,7 @@ import time
 def oauth_failed(requestHandler):
 	requestHandler.response.write("Invalid token")
 	requestHandler.response.status = 401
+	logging.debug("Request authentication failed")
 	return
 
 def oauth_required(http_handler_function):
@@ -31,6 +32,8 @@ def oauth_required(http_handler_function):
 			return
 
 		userid = idinfo["sub"]
+
+		logging.debug("Request authentication success")
 		return http_handler_function(requestHandler)
 
 	return inner
